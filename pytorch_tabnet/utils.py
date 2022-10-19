@@ -3,13 +3,21 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 import torch
 import numpy as np
 import scipy
+from scipy.sparse import issparse
 import json
 from sklearn.utils import check_array
 import pandas as pd
 import warnings
 
 
-class TorchDataset(Dataset):
+def make_dataset(X, y=None):
+    if issparse(X):
+        return SparsePredictDataset(X) if y is None else SparseDataset(X, y)
+    else:
+        return DensePredictDataset(X) if y is None else DenseDataset(X, y)
+
+
+class DenseDataset(Dataset):
     """
     Format for numpy array
 
@@ -33,7 +41,7 @@ class TorchDataset(Dataset):
         return x, y
 
 
-class PredictDataset(Dataset):
+class DensePredictDataset(Dataset):
     """
     Format for numpy array
 
@@ -52,6 +60,51 @@ class PredictDataset(Dataset):
     def __getitem__(self, index):
         x = self.x[index]
         return x
+
+
+class SparseDataset(Dataset):
+    """
+    Format for scipy array
+
+    Parameters
+    ----------
+    X : 2D sparse array
+        The input matrix
+    y : 2D array
+        The one-hot encoded target
+    """
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __len__(self):
+        return self.x.shape[0]
+
+    def __getitem__(self, index):
+        x, y = self.x[index], self.y[index]
+        return x.toarray(), y
+
+
+class SparsePredictDataset(Dataset):
+    """
+    Format for scipy array
+    
+    Parameters
+    ----------
+    X : 2D sparse array
+        The input matrix
+    """
+
+    def __init__(self, x):
+        self.x = x
+
+    def __len__(self):
+        return self.x.shape[0]
+
+    def __getitem__(self, index):
+        x = self.x[index]
+        return x.toarray()
 
 
 def create_sampler(weights, y_train):
@@ -143,7 +196,7 @@ def create_dataloaders(
     need_shuffle, sampler = create_sampler(weights, y_train)
 
     train_dataloader = DataLoader(
-        TorchDataset(X_train.astype(np.float32), y_train),
+        make_dataset(X_train.astype(np.float32), y_train),
         batch_size=batch_size,
         sampler=sampler,
         shuffle=need_shuffle,
@@ -156,7 +209,7 @@ def create_dataloaders(
     for X, y in eval_set:
         valid_dataloaders.append(
             DataLoader(
-                TorchDataset(X.astype(np.float32), y),
+                make_dataset(X.astype(np.float32), y),
                 batch_size=batch_size,
                 shuffle=False,
                 num_workers=num_workers,
@@ -349,7 +402,7 @@ def check_input(X):
     if isinstance(X, (pd.DataFrame, pd.Series)):
         err_message = "Pandas DataFrame are not supported: apply X.values when calling fit"
         raise TypeError(err_message)
-    check_array(X)
+    check_array(X, accept_sparse=True)
 
 
 def check_warm_start(warm_start, from_unsupervised):

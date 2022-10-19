@@ -7,7 +7,7 @@ from scipy.sparse import csc_matrix
 from abc import abstractmethod
 from pytorch_tabnet import tab_network
 from pytorch_tabnet.utils import (
-    PredictDataset,
+    make_dataset,
     create_explain_matrix,
     validate_eval_set,
     create_dataloaders,
@@ -275,7 +275,7 @@ class TabModel(BaseEstimator):
         """
         self.network.eval()
         dataloader = DataLoader(
-            PredictDataset(X),
+            make_dataset(X),
             batch_size=self.batch_size,
             shuffle=False,
         )
@@ -310,7 +310,7 @@ class TabModel(BaseEstimator):
         self.network.eval()
 
         dataloader = DataLoader(
-            PredictDataset(X),
+            make_dataset(X),
             batch_size=self.batch_size,
             shuffle=False,
         )

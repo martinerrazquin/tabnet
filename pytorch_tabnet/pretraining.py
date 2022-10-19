@@ -5,7 +5,7 @@ from pytorch_tabnet import tab_network
 from pytorch_tabnet.utils import (
     create_explain_matrix,
     filter_weights,
-    PredictDataset,
+    make_dataset,
     check_input
 )
 from torch.nn.utils import clip_grad_norm_
@@ -393,7 +393,7 @@ class TabNetPretrainer(TabModel):
         """
         self.network.eval()
         dataloader = DataLoader(
-            PredictDataset(X),
+            make_dataset(X),
             batch_size=self.batch_size,
             shuffle=False,
         )

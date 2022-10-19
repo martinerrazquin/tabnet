@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader
 from pytorch_tabnet.utils import (
     create_sampler,
-    PredictDataset,
+    make_dataset,
     check_input
 )
 
@@ -44,7 +44,7 @@ def create_dataloaders(
     need_shuffle, sampler = create_sampler(weights, X_train)
 
     train_dataloader = DataLoader(
-        PredictDataset(X_train),
+        make_dataset(X_train),
         batch_size=batch_size,
         sampler=sampler,
         shuffle=need_shuffle,
@@ -57,7 +57,7 @@ def create_dataloaders(
     for X in eval_set:
         valid_dataloaders.append(
             DataLoader(
-                PredictDataset(X),
+                make_dataset(X),
                 batch_size=batch_size,
                 sampler=sampler,
                 shuffle=need_shuffle,
