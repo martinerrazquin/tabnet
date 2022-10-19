@@ -82,8 +82,10 @@ class SparseDataset(Dataset):
         return self.x.shape[0]
 
     def __getitem__(self, index):
-        x, y = self.x[index], self.y[index]
-        return x.toarray(), y
+        x, y = self.x[index].toarray(), self.y[index]
+        if isinstance(index, int):
+            x = x.flatten()
+        return x, y
 
 
 class SparsePredictDataset(Dataset):
@@ -103,8 +105,10 @@ class SparsePredictDataset(Dataset):
         return self.x.shape[0]
 
     def __getitem__(self, index):
-        x = self.x[index]
-        return x.toarray()
+        x = self.x[index].toarray()
+        if isinstance(index, int):
+            x = x.flatten()
+        return x
 
 
 def create_sampler(weights, y_train):
